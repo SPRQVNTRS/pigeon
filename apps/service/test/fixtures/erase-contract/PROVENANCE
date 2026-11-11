@@ -1,0 +1,9 @@
+pigeon-erase-request.json is a byte for byte copy of the request that a consumer's core
+service sends to Pigeon when an account is deleted. The core commits it as a contract fixture
+and its own test sends exactly this request. Pigeon replays it in
+test/recipient-erase-contract.test.ts. Do not edit the copy by hand. When the core
+changes the request, copy the new file and update the three lines below.
+
+source: apps/core/tests/fixtures/erase-contract/pigeon-erase-request.json (in the consumer's repository)
+core-commit: 79491cb6fcdd2d17e21662ddf2a407efeedb0971
+sha256: 7b00dac50ac29eadcadbb4a7b0adc3e014da97f9dfd823ffd9a90866b8a2be92

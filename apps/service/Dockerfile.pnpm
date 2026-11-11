@@ -1,0 +1,80 @@
+# Build stage
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# Copy workspace configuration (tsconfig.base.json is extended by apps/service/tsconfig.json)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+
+# Copy git metadata so vite.config.ts can derive the build hash at compile time
+COPY .git/HEAD .git/HEAD
+COPY .git/refs .git/refs
+
+# Copy the app and its workspace dependencies
+COPY apps/service ./apps/service
+COPY packages ./packages
+
+# Install pnpm and dependencies
+RUN corepack enable && corepack prepare pnpm@11.3.0 --activate
+RUN pnpm install --frozen-lockfile
+
+# Derive BUILD_HASH from the git HEAD ref, store it, then remove .git so it
+# never ships in the image (security + size). The hash is baked into the JS
+# bundle at compile time via vite define, so .git is not needed at runtime.
+ARG BUILD_HASH=unknown
+RUN if [ "$BUILD_HASH" = "unknown" ]; then \
+      ref=$(cat .git/HEAD); \
+      if echo "$ref" | grep -q "^ref:"; then \
+        refpath=$(echo "$ref" | sed 's/^ref: //'); \
+        BUILD_HASH=$(cut -c1-10 ".git/$refpath" 2>/dev/null || echo "unknown"); \
+      else \
+        BUILD_HASH=$(echo "$ref" | cut -c1-10); \
+      fi; \
+    fi && echo "$BUILD_HASH" > /tmp/build-hash && rm -rf .git
+
+# Build the React Router app
+WORKDIR /app/apps/service
+RUN BUILD_HASH=$(cat /tmp/build-hash) pnpm build
+
+# Create pruned production deployment. Every dependency, including the
+# @sprqvntrs/* packages, comes from the public npm registry, so the build
+# needs no token and no secret.
+WORKDIR /app
+RUN pnpm --filter=@sprqvntrs/pigeon-service deploy --legacy --prod /deploy
+
+# Production stage
+FROM node:22-alpine
+
+# Node trusts its own bundled roots by default. Use the OS store instead, and
+# upgrade it so it no longer holds the compromised "emSign ECC Root CA - G3"
+# (removed in ca-certificates 20261020-r0).
+RUN apk add --no-cache --upgrade ca-certificates
+ENV NODE_OPTIONS="--use-openssl-ca" SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+
+# tsx needed at runtime for server.ts (install globally before app copy)
+RUN npm install -g tsx@4
+
+WORKDIR /app
+
+# Copy production deployment (pnpm deploy preserves imports but Docker buildx
+# layer cache has been unreliable about propagating the field — we re-inject
+# it explicitly below as a defensive measure)
+COPY --from=builder /deploy ./
+COPY --from=builder /app/apps/service/build ./build
+
+# Copy server entry, drizzle migrations, and start script
+COPY --from=builder /app/apps/service/server.ts ./server.ts
+COPY --from=builder /app/apps/service/drizzle ./drizzle
+COPY --from=builder /app/apps/service/start.sh ./start.sh
+RUN chmod +x ./start.sh
+
+# Explicitly inject imports into package.json — tsx resolves #app/* via
+# package.json#imports at runtime (tsconfig paths are compile-time only)
+RUN node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('./package.json','utf8'));p.imports={'#app/*':'./app/*','#build/*':'./build/*','#drizzle/*':'./drizzle/*','#db/*':'./drizzle/*','#types/*':'./types/*','#config':'./app/config/index.ts'};fs.writeFileSync('./package.json',JSON.stringify(p,null,2));console.log('imports injected:',Object.keys(p.imports).length,'entries');"
+
+EXPOSE 3601
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:3601/healthz || exit 1
+
+ENTRYPOINT ["./start.sh"]

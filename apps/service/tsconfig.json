@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["**/*", "**/.server/**/*", "**/.client/**/*", ".react-router/types/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    ".server/build",
+    ".client/build",
+    "cli/**/*"
+  ],
+  "compilerOptions": {
+    "rootDirs": [".", "./.react-router/types"],
+    "baseUrl": ".",
+    "paths": {
+      "#app/*": ["./app/*"],
+      "#config": ["./app/config/index.ts"],
+      "#drizzle/*": ["./drizzle/*"],
+      "#db/*": ["./drizzle/*"],
+      "#types/*": ["./types/*"]
+    },
+    "noEmit": true
+  }
+}

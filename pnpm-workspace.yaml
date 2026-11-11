@@ -1,0 +1,54 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Restrict optional native deps to the build/deploy target arch.
+# Migrated from package.json `pnpm` field — pnpm 11 no longer reads that field.
+supportedArchitectures:
+  os:
+    - linux
+  cpu:
+    - x64
+
+# pnpm 11 removed `onlyBuiltDependencies` in favour of `allowBuilds` (a map) and
+# hard-fails ("ERR_PNPM_IGNORED_BUILDS") on any dependency with a build script that
+# isn't approved here — pnpm 10 only warned.
+allowBuilds:
+  '@openrouter/sdk': true
+  esbuild: true
+
+# pnpm 11 enables a 1440-minute (24h) release-age cooldown by default. Exempt our
+# own freshly-published internal packages so deploys aren't blocked for a day after
+# publishing them (third-party deps still honour the cooldown).
+minimumReleaseAgeExclude:
+  - '@sprqvntrs/*'
+
+# Security overrides for transitive dependencies (Dependabot alerts). Each entry
+# lifts only the vulnerable range to a patched release in the same major line
+# (0.x minor for esbuild). Drop an entry once its dependents ship a patched
+# range of their own. Cooldown: all targets are older than 24h.
+overrides:
+  '@babel/core@<7.29.6': '^7.29.6'
+  'baseline-browser-mapping@<2.11.0': '^2.11.0'
+  'browserslist@<4.28.7': '^4.28.7'
+  # drizzle-kit's end-of-life @esbuild-kit loader pins ~0.18.20.
+  'esbuild@<0.25.0': '^0.25.12'
+  'esbuild@>=0.27.3 <0.28.1': '^0.28.1'
+  'fast-copy@<4.1.0': '^4.1.0'
+  'fast-xml-builder@<1.1.7': '^1.1.7'
+  'fast-xml-parser@<5.7.0': '^5.7.1'
+  'js-yaml@<3.15.2': '^3.15.2'
+  'linkify-it@<5.0.2': '^5.0.2'
+  'morgan@<1.12.1': '^1.12.1'
+  'nanoid@<3.3.18': '^3.3.18'
+  # mailparser 3.9.8 pins nodemailer ^8 and only uses lib/addressparser, which
+  # nodemailer 10 still exports.
+  'nodemailer@<10.1.4': '^10.1.4'
+  'postcss@<8.5.23': '^8.5.23'
+  'postcss-selector-parser@<6.1.5': '^6.1.5'
+  'proxy-addr@<2.0.8': '^2.0.8'
+  'qs@<6.16.0': '^6.16.0'
+  'shell-quote@<1.9.0': '^1.9.0'
+  'source-map-js@<1.2.2': '^1.2.2'
+  'valibot@<1.4.2': '^1.4.2'
+  'zod@<4.6.6': '^4.6.6'

@@ -1,0 +1,76 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1776690959452,
+      "tag": "0000_unusual_tiger_shark",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776692198925,
+      "tag": "0001_domains_dkim_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777036462270,
+      "tag": "0002_majestic_vampiro",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1779393586248,
+      "tag": "0003_regular_lockjaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791149232778,
+      "tag": "0004_wet_cerise",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794085618907,
+      "tag": "0005_fantastic_mesmero",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794231373825,
+      "tag": "0006_outstanding_randall",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794252009184,
+      "tag": "0007_tranquil_overlord",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794263604184,
+      "tag": "0008_apps_state_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794289092259,
+      "tag": "0009_apps_name_unique",
+      "breakpoints": true
+    }
+  ]
+}

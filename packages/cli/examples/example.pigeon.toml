@@ -1,0 +1,49 @@
+# What my-app needs from pigeon. Needs only: no ids, URLs or secrets.
+# `pigeon manifest validate|plan|apply` reads this file. Copy it to the root of your app as pigeon.toml.
+# Every `env` field holds the NAME of an env var, never a value.
+schema = 1
+app = "my-app"
+
+[env]
+api_key = "PIGEON_API_KEY"
+base_url = "PIGEON_BASE_URL"
+
+[[domains]]
+name = "example.com"
+# Mail for this domain arrives on a normal mailbox, so MX stays with that provider.
+receives_mail = true
+
+[[domains]]
+name = "mail.example.com"
+
+# The default From of every mail that sets none.
+[[senders]]
+address = "no-reply@example.com"
+purpose = "transactional account and system mail"
+env = "MAIL_FROM_ADDRESS"
+
+# A sender set in code, not in an env var.
+[[senders]]
+address = "news@example.com"
+purpose = "newsletter confirmation and issues"
+
+# Confirmed addresses are added to this audience. An unsubscribe deletes the contact.
+[[audiences]]
+name = "my-app-news"
+id_env = "PIGEON_NEWSLETTER_AUDIENCE_ID"
+description = "Subscribers who confirmed the newsletter by the emailed link."
+
+# Signed deliveries to this path of the app. Bounces and complaints stop mail to that address.
+[[webhooks]]
+path = "/webhooks/pigeon"
+events = ["email.bounced", "email.complained", "email.received"]
+secret_env = "PIGEON_WEBHOOK_SECRET"
+
+# Mail received on this domain is sent to the webhook above as email.received.
+[[inbound]]
+domain = "reply.example.com"
+env = "REPLY_DOMAIN"
+
+# The app sends POST /v1/recipients/erase with an address, so pigeon forgets it.
+[uses]
+erase = true

@@ -1,0 +1,19 @@
+{
+  "name": "@sprqvntrs/pigeon-workspace",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @sprqvntrs/pigeon-service dev",
+    "build": "pnpm --filter @sprqvntrs/pigeon-service build",
+    "typecheck": "pnpm --filter @sprqvntrs/pigeon-service typecheck && pnpm --filter @sprqvntrs/pigeon typecheck && pnpm --filter @sprqvntrs/pigeon-cli typecheck",
+    "format": "pnpm --filter @sprqvntrs/pigeon-service format",
+    "pigeon": "pnpm --filter @sprqvntrs/pigeon-cli --silent pigeon"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "packageManager": "pnpm@11.3.0"
+}

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "apps_name_idx" ON "apps" USING btree ("name");

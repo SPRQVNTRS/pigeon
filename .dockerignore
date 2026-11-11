@@ -1,0 +1,16 @@
+node_modules
+**/node_modules
+.git
+# Allow build-hash sources through (Dockerfile.pnpm copies HEAD + refs to derive
+# the short SHA via vite.config.ts at build time, then deletes them).
+!.git/HEAD
+!.git/refs
+packages/sdk/dist
+apps/*/dist
+apps/*/build
+apps/*/.env*
+**/*.log
+.DS_Store
+
+# Keep any local .npmrc (it may hold credentials) out of the build context.
+.npmrc

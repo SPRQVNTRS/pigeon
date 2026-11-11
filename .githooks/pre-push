@@ -1,0 +1,56 @@
+#!/usr/bin/env sh
+# Pre-push quality gate.
+#
+# Runs: typecheck (service + sdk + cli), then the service build. The tests are
+# not part of the gate; run them by hand (see CONTRIBUTING.md).
+# Enable it with: git config core.hooksPath .githooks
+#
+# Escape hatch (pushes unverified code, use deliberately):
+#   SKIP_TESTS=1 git push
+set -e
+
+if [ "${SKIP_TESTS:-0}" = "1" ]; then
+  echo "⚠ pre-push: gate SKIPPED explicitly (SKIP_TESTS=1)"
+  exit 0
+fi
+
+# Branch/tag deletions push no content, so there is nothing to check. stdin gives one line
+# per ref: "<local_ref> <local_sha> <remote_ref> <remote_sha>"; an all-zero
+# local_sha means "delete this remote ref".
+has_content=0
+while read -r _local_ref local_sha _remote_ref _remote_sha; do
+  case "$local_sha" in
+    '' | *[!0]*) has_content=1 ;;
+  esac
+done
+if [ "$has_content" = "0" ]; then
+  echo "▶ pre-push: deletion-only push, nothing to check"
+  exit 0
+fi
+
+# Where to run the commands. Inside a container, run them bare. Else, if a
+# toolbox container named ts-dev exists, run them there. Else run them on the
+# host, with pnpm on PATH or through corepack.
+if [ -f /run/.containerenv ] || [ -f /.dockerenv ]; then
+  run() { CI=true "$@"; }
+elif command -v toolbox >/dev/null 2>&1 \
+  && toolbox list --containers 2>/dev/null | grep -qw ts-dev; then
+  run() { toolbox run -c ts-dev env CI=true "$@"; }
+elif command -v pnpm >/dev/null 2>&1; then
+  run() { CI=true "$@"; }
+elif command -v corepack >/dev/null 2>&1; then
+  run() {
+    if [ "$1" = "pnpm" ]; then shift; CI=true corepack pnpm "$@"; else CI=true "$@"; fi
+  }
+else
+  echo "pre-push: pnpm not found. Install pnpm 11.3.0 or enable corepack, or bypass once with: SKIP_TESTS=1 git push"
+  exit 1
+fi
+
+echo "▶ pre-push: typecheck (service + sdk + cli)"
+run pnpm typecheck
+
+echo "▶ pre-push: build (service)"
+run pnpm --filter @sprqvntrs/pigeon-service build
+
+echo "✅ pre-push: all gates passed"

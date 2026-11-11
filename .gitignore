@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+build/
+dist/
+.react-router/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Docker volumes (local dev)
+postgres-data/
+
+# AWS bootstrap state — created by apps/service/scripts/aws-setup.ts
+.aws-setup.state.*.json
+.aws-setup.state.*.json.archived
+
+# Agent memory (local to each checkout)
+**/.claude/agent-memory/

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "webhooks_app_id_url_uidx" ON "webhooks" USING btree ("app_id","url");

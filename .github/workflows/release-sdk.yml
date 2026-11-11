@@ -1,0 +1,73 @@
+name: Release SDK
+
+on:
+  push:
+    tags:
+      - 'sdk-v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Publish @sprqvntrs/pigeon
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      # Verify the tag matches the packaged version before publishing, so
+      # we can't accidentally ship 0.1.0 under a tag like `sdk-v0.2.0`.
+      - name: Verify tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/sdk-v')
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#sdk-v}"
+          PKG_VERSION=$(node -p "require('./packages/sdk/package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+
+      # SDK has no @sprqvntrs/* deps, so scoping install to the SDK filter
+      # keeps the install small and needs no registry auth.
+      - name: Install dependencies (SDK only)
+        run: pnpm install --filter @sprqvntrs/pigeon... --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm --filter @sprqvntrs/pigeon typecheck
+
+      - name: Build
+        run: pnpm --filter @sprqvntrs/pigeon build
+
+      - name: Test
+        run: pnpm --filter @sprqvntrs/pigeon test
+
+      # Packs the package with pnpm and npm, reads the manifest inside each
+      # tarball, and loads it as ESM and CJS. 3.0.0 shipped entry points that
+      # named src/index.ts. `prepublishOnly` runs this again at publish time.
+      - name: Guard the published shape
+        run: pnpm --filter @sprqvntrs/pigeon test:pack
+
+      # Trusted Publishing needs npm 11.5.1 or later. Node 22 ships an older npm.
+      - name: Upgrade npm for Trusted Publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      # Publishes to the public npm registry with Trusted Publishing (OIDC).
+      # npm trusts this workflow file directly, so there is no stored token and
+      # no NODE_AUTH_TOKEN. It needs `id-token: write` above. npm adds the
+      # provenance statement itself. `prepublishOnly` runs the shape guard again.
+      - name: Publish to npm
+        working-directory: packages/sdk
+        run: npm publish --access public --registry https://registry.npmjs.org
