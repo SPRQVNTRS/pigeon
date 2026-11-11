@@ -2,12 +2,8 @@
  * Every header name Pigeon writes on an outbound webhook delivery lives here,
  * and `buildWebhookHeaders` is the only place that assembles the set.
  *
- * Public names: `Pigeon-Signature`, `Pigeon-Timestamp`, `Pigeon-Event`,
+ * Names: `Pigeon-Signature`, `Pigeon-Timestamp`, `Pigeon-Event`,
  * `Pigeon-Delivery-Id`. Receivers read these.
- *
- * Until the public release the service also sends the deprecated
- * `X-Sprqvntrs-*` names with identical values (see the marked LEGACY section
- * at the end). Removing that one section stops the legacy headers.
  * See `docs/adr/0001-public-release-naming.md`.
  */
 
@@ -31,49 +27,13 @@ export interface WebhookHeaderValues {
   deliveryId: string;
 }
 
-type HeaderSetBuilder = (values: WebhookHeaderValues) => Record<string, string>;
-
-function buildCurrentHeaders(values: WebhookHeaderValues): Record<string, string> {
+/** Build the full header set for one outbound webhook request. */
+export function buildWebhookHeaders(values: WebhookHeaderValues): Record<string, string> {
   return {
+    [WEBHOOK_CONTENT_TYPE_HEADER]: 'application/json',
     [WEBHOOK_HEADERS.signature]: values.signature,
     [WEBHOOK_HEADERS.timestamp]: String(values.timestamp),
     [WEBHOOK_HEADERS.eventType]: values.eventType,
     [WEBHOOK_HEADERS.deliveryId]: values.deliveryId,
   };
 }
-
-/** The header sets sent on every delivery. The LEGACY section below adds one. */
-const headerSetBuilders: HeaderSetBuilder[] = [buildCurrentHeaders];
-
-/** Build the full header set for one outbound webhook request. */
-export function buildWebhookHeaders(values: WebhookHeaderValues): Record<string, string> {
-  const headers: Record<string, string> = { [WEBHOOK_CONTENT_TYPE_HEADER]: 'application/json' };
-  for (const buildHeaderSet of headerSetBuilders) {
-    Object.assign(headers, buildHeaderSet(values));
-  }
-  return headers;
-}
-
-// ===== LEGACY X-Sprqvntrs-* HEADERS: BEGIN =====================================
-// Deprecated. Sent next to the Pigeon-* names until the public release, then
-// removed as a counted API version bump (PIGEON_API_VERSION). To remove them,
-// delete everything from this line to the END marker. Nothing else changes.
-// There is no legacy twin of Pigeon-Timestamp: it is new.
-
-export const LEGACY_WEBHOOK_HEADERS = {
-  signature: 'X-Sprqvntrs-Signature',
-  eventType: 'X-Sprqvntrs-Event',
-  deliveryId: 'X-Sprqvntrs-Delivery-Id',
-} as const;
-
-function buildLegacyHeaders(values: WebhookHeaderValues): Record<string, string> {
-  return {
-    [LEGACY_WEBHOOK_HEADERS.signature]: values.signature,
-    [LEGACY_WEBHOOK_HEADERS.eventType]: values.eventType,
-    [LEGACY_WEBHOOK_HEADERS.deliveryId]: values.deliveryId,
-  };
-}
-
-headerSetBuilders.push(buildLegacyHeaders);
-
-// ===== LEGACY X-Sprqvntrs-* HEADERS: END =======================================

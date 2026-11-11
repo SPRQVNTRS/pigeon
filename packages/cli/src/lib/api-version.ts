@@ -6,7 +6,7 @@
  * Change `SUPPORTED_API` together with `PIGEON_API_VERSION`: raise `max` when
  * this CLI learns the new contract, raise `min` when it drops the old one.
  */
-export const SUPPORTED_API = { min: 1, max: 1 } as const;
+export const SUPPORTED_API = { min: 1, max: 2 } as const;
 
 export interface SupportedApiRange {
   min: number;

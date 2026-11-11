@@ -28,22 +28,6 @@ Use these names.
 | `Pigeon-Event` | The event type, for example `email.bounced` |
 | `Pigeon-Delivery-Id` | The id of the delivery. It equals the `id` field of the body |
 
-### Deprecated names
-
-Pigeon also sends the old `X-Sprqvntrs-*` names with the same values, so
-existing receivers keep working. Both sets are sent until the public release.
-Then the old names stop, as a counted API version bump. Move to the `Pigeon-*`
-names before that.
-
-| Old name | New name |
-|----------|----------|
-| `X-Sprqvntrs-Signature` | `Pigeon-Signature` |
-| `X-Sprqvntrs-Event` | `Pigeon-Event` |
-| `X-Sprqvntrs-Delivery-Id` | `Pigeon-Delivery-Id` |
-
-`Pigeon-Timestamp` is new and has no old name. The signature value, the
-algorithm and the signed payload did not change.
-
 ## Verify the signature
 
 The key is the signing secret of the webhook. The algorithm is HMAC-SHA256.
@@ -73,9 +57,6 @@ export function isValidPigeonSignature(opts: {
   return provided.length === expected.length && timingSafeEqual(provided, expected);
 }
 ```
-
-A receiver that must work with both old and new Pigeon versions reads
-`Pigeon-Signature` first and falls back to `X-Sprqvntrs-Signature`.
 
 ## Rotating the secret
 

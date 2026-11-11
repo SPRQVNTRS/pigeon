@@ -6,8 +6,7 @@
  * Signature scheme (Stripe-style):
  *     Pigeon-Signature: t=<unix_ts>,v1=<hmac_sha256_hex>
  * where the HMAC input is `<unix_ts>.<raw_body>` and the key is the webhook's
- * signing secret. Header names live in `#app/lib/webhook-headers`, which also
- * sends the deprecated `X-Sprqvntrs-*` names until the public release.
+ * signing secret. Header names live in `#app/lib/webhook-headers`.
  *
  * Retries are handled by pg-boss via `retryLimit: 5, retryDelay: 1,
  * retryBackoff: true` at enqueue time. This worker throws on a failed attempt

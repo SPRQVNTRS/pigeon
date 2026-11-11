@@ -70,7 +70,7 @@ describe('checkApiVersion', () => {
   });
 
   it('formats a single-version range as one number', () => {
-    assert.equal(formatRange(SUPPORTED_API), '1');
+    assert.equal(formatRange({ min: 1, max: 1 }), '1');
     assert.equal(formatRange(RANGE), '2 to 3');
   });
 });

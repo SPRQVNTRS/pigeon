@@ -5,9 +5,9 @@
  *   - `Content-Type: application/json`
  *   - `Pigeon-Signature: t=<unix_ts>,v1=<hmac_sha256_hex>`
  *   - `Pigeon-Timestamp`, `Pigeon-Event` and `Pigeon-Delivery-Id` set from args
- *   - the deprecated `X-Sprqvntrs-*` twins with identical values (public release removes them)
  * and that `verifyWebhookSignature` round-trips against the same body + secret,
- * and that a real delivery (fetch call) carries both header sets.
+ * and that a real delivery (fetch call) carries those headers and no
+ * `X-Sprqvntrs-*` header.
  *
  * Wire names are written as literals on purpose: a renamed constant must not
  * be able to rename the contract silently.
@@ -88,56 +88,13 @@ describe('webhook-deliver signature', () => {
   });
 });
 
-// LEGACY: delete this block together with the LEGACY section of
-// app/lib/webhook-headers.ts when the public release drops X-Sprqvntrs-*.
-describe('webhook-deliver legacy X-Sprqvntrs-* headers (deprecated)', () => {
-  const TWINS: Array<[string, string]> = [
-    ['Pigeon-Signature', 'X-Sprqvntrs-Signature'],
-    ['Pigeon-Event', 'X-Sprqvntrs-Event'],
-    ['Pigeon-Delivery-Id', 'X-Sprqvntrs-Delivery-Id'],
-  ];
-
-  it.each(TWINS)('%s carries the same value as %s', (current, legacy) => {
-    const headers = buildTestHeaders('{"id":"evt_1"}');
-    expect(headers[legacy]).toBeDefined();
-    expect(headers[legacy]).toBe(headers[current]);
-  });
-
-  it('verifies with the legacy signature name too', () => {
-    const rawBody = '{"id":"evt_1"}';
-    const headers = buildTestHeaders(rawBody);
-    expect(
-      verifyWebhookSignature({
-        signingSecret: SECRET,
-        rawBody,
-        header: headers['X-Sprqvntrs-Signature']!,
-      }),
-    ).toBe(true);
-  });
-
-  it('sends exactly the documented header names and no others', () => {
-    expect(Object.keys(buildTestHeaders('{}')).sort()).toEqual(
-      [
-        'Content-Type',
-        'Pigeon-Delivery-Id',
-        'Pigeon-Event',
-        'Pigeon-Signature',
-        'Pigeon-Timestamp',
-        'X-Sprqvntrs-Delivery-Id',
-        'X-Sprqvntrs-Event',
-        'X-Sprqvntrs-Signature',
-      ].sort(),
-    );
-  });
-});
-
 describe('webhook-deliver request', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
   });
 
-  it('sends both header sets with the same values on every delivery', async () => {
+  it('sends the Pigeon-* headers and no X-Sprqvntrs-* header on every delivery', async () => {
     // fetch sends only under allow; the default (deny) uses the pinned transport.
     vi.stubEnv('PIGEON_WEBHOOK_PRIVATE_TARGETS', 'allow');
     const fetchMock = vi.fn(async () => new Response('ok', { status: 200 }));
@@ -163,9 +120,7 @@ describe('webhook-deliver request', () => {
 
     expect(sent['Pigeon-Event']).toBe('email.bounced');
     expect(sent['Pigeon-Delivery-Id']).toBe('evt_77');
-    expect(sent['X-Sprqvntrs-Event']).toBe('email.bounced');
-    expect(sent['X-Sprqvntrs-Delivery-Id']).toBe('evt_77');
-    expect(sent['X-Sprqvntrs-Signature']).toBe(sent['Pigeon-Signature']);
+    expect(Object.keys(sent).filter((name) => name.toLowerCase().startsWith('x-sprqvntrs'))).toEqual([]);
     expect(sent['Pigeon-Signature']).toBe(
       `t=${sent['Pigeon-Timestamp']},v1=${createHmac('sha256', SECRET)
         .update(`${sent['Pigeon-Timestamp']}.${rawBody}`)

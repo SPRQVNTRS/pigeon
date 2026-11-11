@@ -4,6 +4,8 @@
 
 Accepted, 2026-11-09.
 
+2026-11-11: the legacy `X-Sprqvntrs-*` headers were removed and `PIGEON_API_VERSION` moved to 2.
+
 ## Context
 
 Pigeon is a transactional email service on AWS SES with a TypeScript SDK. It was built for its owner's own sites and still carries the owner's brand in header names, the SDK default URL, a deprecated alias and a licence field. A later public release needs these names to be swappable, and the live consumers must not break on the way.
