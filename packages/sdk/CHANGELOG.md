@@ -2,6 +2,12 @@
 
 All notable changes to `@sprqvntrs/pigeon` (the SDK) are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0.2] - 2026-11-11
+
+### Changed
+
+- No code change. This is the first version that the release workflow publishes with npm Trusted Publishing. The package on npm now has a provenance statement, which shows the commit and the workflow that built it.
+
 ## [3.0.1] - 2026-11-11
 
 ### Fixed
